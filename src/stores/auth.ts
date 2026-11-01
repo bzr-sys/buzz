@@ -82,17 +82,8 @@ export const useAuthStore = defineStore("auth", () => {
       console.error("Login failed", e);
       return;
     }
-    // The popup takes focus. When it closes without logging in, focus comes
-    // back here: reset the button so people can try again.
-    window.addEventListener(
-      "focus",
-      () => {
-        setTimeout(() => {
-          if (!authenticated.value) loggingIn.value = false;
-        }, 1500);
-      },
-      { once: true },
-    );
+    // The popup closed without logging in: people can try again
+    if (!bzr.isLoggedIn()) loggingIn.value = false;
   }
 
   function failLogin(message: string) {
