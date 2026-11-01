@@ -27,7 +27,7 @@ export const useSubscriptionsStore = defineStore("subscriptions", () => {
   const subscriptionsMap = ref({} as { [userId: string]: User });
 
   const blogData = ref({} as { [userId: string]: Post[] });
-  const blogUnsubscribe = {} as { [userId: string]: () => Promise<string> };
+  const blogUnsubscribe = {} as { [userId: string]: () => Promise<void> };
 
   // Posts that arrived while the app was open (not part of the initial load)
   const freshIds = ref(new Set<string>());
@@ -95,7 +95,7 @@ export const useSubscriptionsStore = defineStore("subscriptions", () => {
       const ctx = await bzr.createContext({ ownerId: userId });
       const blogC = ctx.collection<Post>(DEFAULT_BLOG_COLLECTION_NAME);
       blogData.value[userId] = [];
-      blogUnsubscribe[userId] = await blogC.subscribeAll(
+      await blogC.subscribeAll(
         {},
         arrayMirrorSubscribeListener(blogData.value[userId], {
           onAdd: (doc) => {
@@ -103,6 +103,7 @@ export const useSubscriptionsStore = defineStore("subscriptions", () => {
           },
         }),
       );
+      blogUnsubscribe[userId] = () => ctx.close();
     } catch (err) {
       // e.g. they have never opened Buzz: nothing to show yet
       console.log("Cannot subscribe to blog:", err);
