@@ -10,6 +10,7 @@ import {
   isUserDoesNotExistError,
   BazaarError,
   ErrorTypes,
+  type BazaarContext,
 } from "@bzr/bazaar";
 import type { Post } from "@/types";
 import { toDate } from "@/utils/time";
@@ -72,8 +73,9 @@ export const useDefaultBlogStore = defineStore("defaultBlog", () => {
 
   /** Reads another user's public posts, newest first. */
   async function getDefaultBlog(userId: string): Promise<BlogResult> {
+    let ctx: BazaarContext | undefined;
     try {
-      const ctx = await bzr.createContext({ ownerId: userId });
+      ctx = await bzr.createContext({ ownerId: userId });
       const posts = await ctx
         .collection<Post>(DEFAULT_BLOG_COLLECTION_NAME)
         .getAll({}, { orderBy: { ts: OrderByType.DESC } });
@@ -97,6 +99,8 @@ export const useDefaultBlogStore = defineStore("defaultBlog", () => {
       }
       console.log("Cannot read blog:", err);
       return { status: "error" };
+    } finally {
+      void ctx?.close();
     }
   }
 
